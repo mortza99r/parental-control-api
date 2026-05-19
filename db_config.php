@@ -3,7 +3,7 @@
 
 $servername = "mainline.proxy.rlwy.net"; 
 $username   = "root";          
-$password   = "ukmWUNCdPCHnZBDOUodBROgeTioqWYVT"; // تأكد من مطابقتها للباسورد بالكامل بعد زر العين
+$password   = "ukmWUNCdPCHnZBDOUOdBROgeTioqWYVT"; // تأكد من مطابقتها للباسورد بالكامل بعد زر العين
 $dbname     = "railway";      
 $port       = "38757"; // المنفذ الخارجي الخاص بك
 
