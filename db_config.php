@@ -1,26 +1,22 @@
 <?php
-/**
- * ملف الاتصال الموحد بقاعدة البيانات (PDO)
- * العقل المدبر: Murtadha Abdulnoor Al-Sorori
- */
+// إعدادات الاتصال بقاعدة بيانات Railway
+// اضغط على زر العين (👁️) بجانب كل متغير في Railway لنسخ القيمة الحقيقية
 
-$host = 'sql301.byetcluster.com'; 
-$db_name = 'if0_41922795_monitoring_db'; 
-$username = 'if0_41922795'; 
-$password ='mdgZGaww'; 'اكتب_هنا_كلمة_سر_حسابك_في_الاستضافة'; 
+$servername = "mysql.railway.internal";          // مثال: mysql.railway.internal أو العنوان الخارجي
+$username   = "root";          // اسم المستخدم من لوحة التحcontrol
+$password   = "ukmWUNCdPCHnZBDOUOdBROgeTioqWYVT";      // كلمة المرور السرية
+$dbname     = "railway";      // اسم قاعدة البيانات
+$port       = "3306";          // المنفذ (غالباً يكون 3306)
 
 try {
-    // إنشاء الاتصال مع ضبط الترميز للعربية utf8mb4
-    $conn = new PDO("mysql:host=$host;dbname=$db_name;charset=utf8mb4", $username, $password);
+    // الاتصال باستخدام امتداد PDO المتوافق مع الكود الخاص بك
+    $conn = new PDO("mysql:host=$servername;port=$port;dbname=$dbname;charset=utf8", $username, $password);
     
-    // ضبط وضع الأخطاء (مهم جداً للمناقشة مع الدكتور)
+    // تفعيل وضع إظهار الأخطاء بشكل تفصيلي لتسهيل التتبع
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // ضبط جلب البيانات كمصفوفة مرتبطة (Associative Array)
-    $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-
 } catch(PDOException $e) {
-    // في حالة الخطأ يظهر لنا السبب (سنخفيه لاحقاً عند نشر التطبيق للأمان)
-    die("فشل الاتصال بالقاعدة: " . $e->getMessage());
+    // في حال فشل الاتصال سيطبع السبب مباشرة على الشاشة
+    die("فشل الاتصال بقاعدة بيانات Railway: " . $e->getMessage());
 }
 ?>
