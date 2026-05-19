@@ -1,61 +1,92 @@
 <?php
-// استدعاء ملف الاتصال الموحد المربوط بـ Railway
-// يرجى التأكد من المسار، إذا كان db_config خارج مجلد sms بمرتبة واحدة نستخدم ونكتب ../db_config.php
-include_once __DIR__ . '/../db_config.php';
+// إجبار السيرفر على إرسال استجابة بصيغة JSON
+header("Content-Type: application/json; charset=UTF-8");
 
-// ضبط نوع الرد ليكون JSON متناسق مع الأندرويد
-header('Content-Type: application/json; charset=utf-8');
+// استدعاء ملف الاتصال الموحد
+include '../db_config.php';
 
-// استقبال البيانات بصيغة JSON القادمة من تطبيق الأندرويد
-$inputData = file_get_contents('php://input');
-$data = json_decode($inputData, true);
-
-// التحقق من وصول البيانات المطلوبة
-if (!isset($data['sender']) || !isset($data['message'])) {
-    http_response_code(400);
-    echo json_encode(["status" => "error", "message" => "بيانات ناقصة، لم يتم إرسال المرسل أو نص الرسالة"]);
-    exit();
+// التأكد من أن الطلب قادم عبر POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode([
+        "status" => "error",
+        "message" => "طريقة الطلب غير مسموح بها. استخدم POST فقط."
+    ]);
+    exit;
 }
 
-$sender = trim($data['sender']);
-$message = trim($data['message']);
+// استقبال البيانات القادمة من التطبيق
+$device_uid = isset($_POST['device_uid']) ? trim($_POST['device_uid']) : null;
+$sender = isset($_POST['sender']) ? trim($_POST['sender']) : null;
+$message = isset($_POST['message']) ? trim($_POST['message']) : null;
+
+// 🔥 تم إصلاح الخطأ البرمجي هنا (إضافة علامة ||)
+if (empty($device_uid) || empty($sender) || empty($message)) {
+    echo json_encode([
+        "status" => "error",
+        "message" => "المعطيات ناقصة: device_uid و sender و message مطلوبة."
+    ]);
+    exit;
+}
 
 try {
-    // 🔥 حجر الزاوية لمنع التكرار في السيرفر:
-    // الفحص في قاعدة البيانات: هل تم استقبال نفس الرسالة من نفس الرقم خلال آخر 10 دقائق؟
-    $checkSql = "SELECT id FROM sms_messages 
-                 WHERE sender = :sender AND message = :message 
-                 AND created_at >= NOW() - INTERVAL 10 MINUTE 
-                 LIMIT 1";
-                 
-    $checkStmt = $conn->prepare($checkSql);
-    $checkStmt->execute([
-        ':sender' => $sender,
-        ':message' => $message
-    ]);
+    // جلب الـ id الرقمي الخاص بالجهاز بواسطة الـ UID
+    $stmt_device = $conn->prepare("SELECT id FROM devices WHERE device_unique_id = :uid LIMIT 1");
+    $stmt_device->execute([':uid' => $device_uid]);
+    $device = $stmt_device->fetch();
 
-    if ($checkStmt->fetch()) {
-        // الرسالة موجودة مسبقاً، نرد بالنجاح للأندرويد ليقوم بحذفها من المخزن المحلي ولا يعلق السيرفر بالتكرار
-        http_response_code(200);
-        echo json_encode(["status" => "success", "message" => "الرسالة مكررة ومحفوظة مسبقاً"]);
-        exit();
+    if (!$device) {
+        echo json_encode([
+            "status" => "error",
+            "message" => "خطأ: هذا الجهاز غير مسجل في النظام مسبقاً. قم بعمل Register أولاً."
+        ]);
+        exit;
     }
 
-    // إذا لم تكن مكررة، نقوم بإدخالها مباشرة
-    // يرجى التأكد من أن أسماء الأعمدة (sender, message) تطابق تماماً أسماء الأعمدة في جدولك
-    $insertSql = "INSERT INTO sms_messages (sender, message) VALUES (:sender, :message)";
-    $insertStmt = $conn->prepare($insertSql);
-    
-    $insertStmt->execute([
-        ':sender' => $sender,
-        ':message' => $message
+    $device_id = $device['id'];
+
+    // 🔥 خطوة الخطة الاحترافية: التحقق من عدم وجود الرسالة مسبقاً لمنع التكرار
+    $check_sql = "SELECT id FROM sms_logs 
+                  WHERE device_id = :device_id 
+                  AND sender = :sender 
+                  AND message_body = :message 
+                  AND created_at >= NOW() - INTERVAL 10 MINUTE 
+                  LIMIT 1";
+    $stmt_check = $conn->prepare($check_sql);
+    $stmt_check->execute([
+        ':device_id' => $device_id,
+        ':sender'    => $sender,
+        ':message'   => $message
     ]);
 
-    http_response_code(200);
-    echo json_encode(["status" => "success", "message" => "تم حفظ الرسالة بنجاح في قاعدة البيانات"]);
+    if ($stmt_check->fetch()) {
+        // إذا الرسالة مكررة، نرد بنجاح عشان الأندرويد يحذفها من عنده وما يعيد إرسالها
+        echo json_encode([
+            "status" => "success",
+            "message" => "الرسالة مكررة وتم حفظها مسبقاً."
+        ]);
+        exit;
+    }
+
+    // إدخال رسالة الـ SMS الجديدة
+    $sql = "INSERT INTO sms_logs (device_id, sender, message_body, created_at) 
+            VALUES (:device_id, :sender, :message, NOW())";
+            
+    $stmt_insert = $conn->prepare($sql);
+    $stmt_insert->execute([
+        ':device_id' => $device_id,
+        ':sender'    => $sender,
+        ':message'   => $message
+    ]);
+
+    echo json_encode([
+        "status" => "success",
+        "message" => "تم حفظ رسالة الـ SMS بنجاح وربطها بالجهاز المحفوظ."
+    ]);
 
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(["status" => "error", "message" => "خطأ في السيرفر: " . $e->getMessage()]);
+    echo json_encode([
+        "status" => "error",
+        "message" => "خطأ في قاعدة البيانات: " . $e->getMessage()
+    ]);
 }
 ?>
