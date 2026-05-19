@@ -2,11 +2,11 @@
 // إعدادات الاتصال بقاعدة بيانات Railway
 // اضغط على زر العين (👁️) بجانب كل متغير في Railway لنسخ القيمة الحقيقية
 
-$servername = "mysql.railway.internal";          // مثال: mysql.railway.internal أو العنوان الخارجي
+$servername = "mysql://root:ukmWUNCdPCHnZBDOUOdBROgeTioqWYVT@mainline.proxy.rlwy.net:38757/railway";          // مثال: mysql.railway.internal أو العنوان الخارجي
 $username   = "root";          // اسم المستخدم من لوحة التحcontrol
 $password   = "ukmWUNCdPCHnZBDOUOdBROgeTioqWYVT";      // كلمة المرور السرية
 $dbname     = "railway";      // اسم قاعدة البيانات
-$port       = "3306";          // المنفذ (غالباً يكون 3306)
+$port       = "38757";          // المنفذ (غالباً يكون 3306)
 
 try {
     // الاتصال باستخدام امتداد PDO المتوافق مع الكود الخاص بك
