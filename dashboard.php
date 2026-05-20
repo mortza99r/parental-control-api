@@ -1,105 +1,136 @@
 <?php
 session_start();
-include 'db_config.php';
 
 if (!isset($_SESSION['device_id'])) {
     header("Location: index.php");
     exit;
 }
 
-$stmt = $conn->query("SELECT * FROM devices ORDER BY id DESC");
-$devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$parentName = $_SESSION['parent_name'];
+$deviceName = $_SESSION['device_name'];
 ?>
 
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الأجهزة المسجلة</title>
+
+<title>لوحة التحكم</title>
+
 <style>
+
 body{
     background:#0f172a;
-    color:white;
     font-family:Tahoma;
     margin:0;
-    padding:20px;
+    color:white;
+}
+
+.container{
+    width:90%;
+    max-width:900px;
+    margin:auto;
+    margin-top:40px;
+}
+
+.header{
+    background:#1e293b;
+    padding:25px;
+    border-radius:20px;
+    margin-bottom:25px;
 }
 
 h1{
-    margin-bottom:20px;
+    margin:0;
 }
 
-.top-bar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:20px;
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
 }
 
-a{
-    color:white;
-    text-decoration:none;
-    background:#2563eb;
-    padding:10px 16px;
-    border-radius:10px;
-}
-
-.table-box{
+.card{
     background:#1e293b;
-    padding:20px;
-    border-radius:20px;
+    padding:25px;
+    border-radius:18px;
+    text-decoration:none;
+    color:white;
+    transition:0.3s;
+    box-shadow:0 0 15px rgba(0,0,0,0.3);
 }
 
-.table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-.table th,
-.table td{
-    padding:14px;
-    border-bottom:1px solid #334155;
-    text-align:center;
-}
-
-.table th{
+.card:hover{
+    transform:translateY(-5px);
     background:#334155;
 }
+
+.card h2{
+    margin-top:0;
+    margin-bottom:10px;
+}
+
+.logout{
+    margin-top:30px;
+    display:inline-block;
+    background:#dc2626;
+    color:white;
+    padding:14px 20px;
+    border-radius:10px;
+    text-decoration:none;
+}
+
+.logout:hover{
+    background:#b91c1c;
+}
+
 </style>
+
 </head>
+
 <body>
 
-<div class="top-bar">
-    <h1>الأجهزة المسجلة</h1>
+<div class="container">
 
-    <div>
-        <a href="sms_logs.php">سجل الرسائل</a>
-        <a href="logout.php">تسجيل خروج</a>
+    <div class="header">
+        <h1>مرحباً <?php echo htmlspecialchars($parentName); ?></h1>
+
+        <p>
+            الجهاز المرتبط:
+            <?php echo htmlspecialchars($deviceName); ?>
+        </p>
     </div>
-</div>
 
-<div class="table-box">
-<table class="table">
-<tr>
-    <th>ID</th>
-    <th>اسم الجهاز</th>
-    <th>UID</th>
-    <th>إصدار أندرويد</th>
-    <th>وقت التسجيل</th>
-</tr>
+    <div class="cards">
 
-<?php foreach($devices as $device): ?>
-<tr>
-    <td><?php echo $device['id']; ?></td>
-    <td><?php echo $device['child_name']; ?></td>
-    <td><?php echo $device['device_unique_id']; ?></td>
-    <td><?php echo $device['android_version']; ?></td>
-    <td><?php echo $device['created_at']; ?></td>
-</tr>
-<?php endforeach; ?>
+        <a class="card" href="devices.php">
+            <h2>الأجهزة</h2>
+            <p>عرض الأجهزة المسجلة</p>
+        </a>
 
-</table>
+        <a class="card" href="sms_logs.php">
+            <h2>سجل الرسائل</h2>
+            <p>عرض رسائل SMS المستلمة</p>
+        </a>
+
+        <a class="card" href="commands.php">
+            <h2>الأوامر</h2>
+            <p>إرسال أوامر للجهاز</p>
+        </a>
+
+        <a class="card" href="screenshots.php">
+            <h2>الصور</h2>
+            <p>عرض صور الشاشة المرفوعة</p>
+        </a>
+
+    </div>
+
+    <a class="logout" href="logout.php">
+        تسجيل خروج
+    </a>
+
 </div>
 
 </body>
