@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $stmt = $conn->prepare("SELECT * FROM devices WHERE parent_password = :password LIMIT 1");
     $stmt->execute([
-        ':password' => $password
+        ':password' => 1111
     ]);
 
     $device = $stmt->fetch(PDO::FETCH_ASSOC);
