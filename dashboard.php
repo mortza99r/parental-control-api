@@ -115,7 +115,7 @@ h1{
             <p>عرض رسائل SMS المستلمة</p>
         </a>
 
-        <a class="card" href="commands.php">
+        <a class="card" href="commands_panel.php">
             <h2>الأوامر</h2>
             <p>إرسال أوامر للجهاز</p>
         </a>
